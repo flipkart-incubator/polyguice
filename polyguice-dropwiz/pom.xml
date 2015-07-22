@@ -27,7 +27,7 @@
             <version>1.9.2</version>
         </dependency>
         <dependency>
-            <groupId>hatimi.polyguice</groupId>
+            <groupId>com.flipkart.polyguice</groupId>
             <artifactId>polyguice-core</artifactId>
             <version>${project.version}</version>
         </dependency>
