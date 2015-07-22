@@ -22,7 +22,7 @@
             <version>2.3.12</version>
         </dependency>
         <dependency>
-            <groupId>hatimi.polyguice</groupId>
+            <groupId>com.flipkart.polyguice</groupId>
             <artifactId>polyguice-core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -30,7 +30,6 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
