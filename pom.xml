@@ -84,6 +84,15 @@
                     </includes>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
         </plugins>
         <extensions>
             <!-- Enabling the use of FTP for deployment -->
@@ -124,4 +133,10 @@
         </plugins>
     </reporting>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray</id>
+            <url>https://api.bintray.com/maven/indroneel/maven/polyguice</url>
+        </repository>
+    </distributionManagement>
 </project>

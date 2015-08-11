@@ -28,12 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletRegistration;
+import javax.servlet.annotation.WebInitParam;
+import javax.servlet.annotation.WebServlet;
+
+import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +49,11 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PolyguiceApp.class);
 
-    private List<String>  resPkgNames;
+    private List<String>  scanPkgNames;
     private Polyguice     polyguice;
 
     public PolyguiceApp() {
-        resPkgNames = new ArrayList<>();
+        scanPkgNames = new ArrayList<>();
     }
 
     public final PolyguiceApp<T> setPolyguice(Polyguice pg) {
@@ -61,7 +62,7 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
     }
 
     public final PolyguiceApp<T> scanPackage(String name) {
-        resPkgNames.add(name);
+        scanPkgNames.add(name);
         return this;
     }
 
@@ -102,6 +103,12 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
             }
         }
 
+        List<Class<?>> servletTypes = findServletTypes();
+        LOGGER.debug("found potential servlets: {}", servletTypes);
+        for(Class<?> type : servletTypes) {
+            registerServlet(type, env);
+        }
+
         env.lifecycle().manage(new PolyguiceManaged());
         postRun(config, env);
     }
@@ -121,23 +128,20 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
     // Helper methods
 
     private Set<Class<?>> findResourceTypes() {
-/*
- * This is a hack around the Reflections package. FilterBuilder does not
- * seem to work with multiple package names, so the list of packages
- * must be provided in a loop
- */
-
-        FilterBuilder fb = new FilterBuilder();
-        for(String pkgName : resPkgNames) {
-            fb.includePackage(pkgName);
-        }
-        ConfigurationBuilder cb = new ConfigurationBuilder()
-            .filterInputsBy(fb)
-            .setUrls(ClasspathHelper.forClassLoader())
-            .addScanners(new SubTypesScanner(), new TypeAnnotationsScanner());
-        Reflections reflections = new Reflections(cb);
-
+        Reflections reflections = new Reflections(scanPkgNames.toArray());
         return reflections.getTypesAnnotatedWith(Resource.class);
+    }
+
+    private List<Class<?>> findServletTypes() {
+        Reflections reflections = new Reflections(scanPkgNames.toArray());
+        Set<Class<?>> types = reflections.getTypesAnnotatedWith(WebServlet.class);
+        List<Class<?>> result = new ArrayList<>();
+        for(Class<?> type : types) {
+            if(Servlet.class.isAssignableFrom(type)) {
+                result.add(type);
+            }
+        }
+        return result;
     }
 
     private Object createResource(Class<?> cls, T config, Environment env)
@@ -205,6 +209,47 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
             //NOOP, not even log
         }
         return null;
+    }
+
+    private void registerServlet(Class<?> type, Environment env) {
+        LOGGER.debug("registering servlet: {}", type.getName());
+        WebServlet ann = type.getAnnotation(WebServlet.class);
+        String srvName = ann.name();
+        if(StringUtils.isBlank(srvName)) {
+            LOGGER.error("servlet {}: name could not be blank", type.getName());
+            return;
+        }
+        String[] paths = ann.urlPatterns();
+        if(paths == null || paths.length == 0) {
+            paths = ann.value();
+            if(paths == null || paths.length == 0) {
+                LOGGER.error("url patterns missing for servlet {}", type.getName());
+                return;
+            }
+        }
+        int losu = ann.loadOnStartup();
+        Servlet servlet = null;
+        try {
+            servlet = (Servlet) type.newInstance();
+            polyguice.getComponentContext().inject(servlet);
+        }
+        catch(Exception exep) {
+            LOGGER.error("error creating servlet {}", type.getName());
+            return;
+        }
+        ServletRegistration.Dynamic dynamic = env.servlets().addServlet(srvName, servlet);
+        dynamic.addMapping(paths);
+        dynamic.setLoadOnStartup(losu);
+        if(ann.initParams() == null) {
+            return;
+        }
+        for(WebInitParam param : ann.initParams()) {
+            String name = param.name();
+            String value = param.value();
+            if(StringUtils.isNoneBlank(name)) {
+                dynamic.setInitParameter(name, value);
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
