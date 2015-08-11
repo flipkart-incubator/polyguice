@@ -40,7 +40,7 @@ import com.google.gson.JsonStreamParser;
  * values from a JSON encoded file.
  * <p>
  *
- * @author indroneel.das
+ * @author poroshuram
  */
 
 public class JsonConfiguration extends AbstractConfiguration {

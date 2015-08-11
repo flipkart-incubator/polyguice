@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
  * suffix.
  * <p>
  *
- * @author indroneel.das
+ * @author poroshuram
  */
 
 public class TimeInterval {
