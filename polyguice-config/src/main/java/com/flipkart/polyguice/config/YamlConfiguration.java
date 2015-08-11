@@ -33,7 +33,10 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * @author poroshuram
+ * Provides a configuration source for Apache Commons configuration that loads
+ * values from a YAML file.
+ *
+ * @author indroneel.das
  *
  */
 

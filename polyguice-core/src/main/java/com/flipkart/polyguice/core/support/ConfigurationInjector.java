@@ -80,7 +80,7 @@ class ConfigurationInjector {
         if(key == null || key.trim().length() == 0) {
             key = ann.value();
             if(key == null || key.trim().length() == 0) {
-                LOGGER.warn("InjectPreference on: {}#{} does not have a name",
+                LOGGER.warn("@Configuration on: {}#{} does not have a name",
                         field.getDeclaringClass().getName(), field.getName());
                 return !required; //return true only if not required.
             }
@@ -88,7 +88,7 @@ class ConfigurationInjector {
 
         Object value = retrieveConfig(key, field.getType());
         if(value == null) {
-            LOGGER.warn("preference {} not found or not of required type", key);
+            LOGGER.warn("configuration {} not found or not of required type", key);
             return !required; //return true only if not required.
         }
 
@@ -103,7 +103,7 @@ class ConfigurationInjector {
             }
         }
         catch(Exception exep) {
-            LOGGER.warn("preference: {} error injecting on field {}#{}",
+            LOGGER.warn("configuration: {} error injecting on field {}#{}",
                     key, field.getDeclaringClass().getName(), field.getName());
             return !required; //return true only if not required.
         }
@@ -122,7 +122,7 @@ class ConfigurationInjector {
         if(key == null || key.trim().length() == 0) {
             key = ann.value();
             if(key == null || key.trim().length() == 0) {
-                LOGGER.warn("InjectPreference on: {}#{} does not have a name",
+                LOGGER.warn("@Configuration on: {}#{} does not have a name",
                         method.getDeclaringClass().getName(), method.getName());
                 return !required; //return true only if not required.
             }
@@ -150,7 +150,7 @@ class ConfigurationInjector {
 
         Object value = retrieveConfig(key, method.getParameterTypes()[0]);
         if(value == null) {
-            LOGGER.warn("preference {} not found or not of required type", key);
+            LOGGER.warn("configuration {} not found or not of required type", key);
             return !required; //return true only if not required.
         }
 
@@ -158,7 +158,7 @@ class ConfigurationInjector {
             method.invoke(target, value);
         }
         catch(Exception exep) {
-            LOGGER.warn("preference: {} error injecting on method {}#{}",
+            LOGGER.warn("configuration: {} error injecting on method {}#{}",
                     key, method.getDeclaringClass().getName(), method.getName());
             return !required; //return true only if not required.
         }
