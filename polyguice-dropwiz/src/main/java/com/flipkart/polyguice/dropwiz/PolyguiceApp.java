@@ -80,6 +80,8 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
             throw new RuntimeException("polyguice should not be prepared yet");
         }
 
+        preRun(config,env);
+
         DropConfigProvider dcp = new DropConfigProvider(config);
         polyguice.registerConfigurationProvider(dcp);
         polyguice.prepare();
@@ -118,6 +120,10 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
 
     protected final Polyguice getPolyguice() {
         return polyguice;
+    }
+
+    protected void preRun(T config, Environment env) throws Exception {
+        //NOOP
     }
 
     protected void postRun(T config, Environment env) throws Exception {
