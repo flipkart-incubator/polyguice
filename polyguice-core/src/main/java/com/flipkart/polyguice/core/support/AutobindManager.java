@@ -35,17 +35,15 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
 /**
- *
  * @author indroneel.das
- *
  */
 
 class AutobindManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AutobindManager.class);
 
-    private Binder             binder;
-    private List<String>       procNames;
+    private Binder binder;
+    private List<String> procNames;
     private List<SingletonKey> singletonKeys;
 
     AutobindManager(Binder binder) {
@@ -54,7 +52,7 @@ class AutobindManager {
 
     public void autobind(String[] scanPkgNames) {
         LOGGER.debug("start_autobind");
-        for(String pkgName : scanPkgNames) {
+        for (String pkgName : scanPkgNames) {
             LOGGER.debug("scan_package {}", pkgName);
         }
 
@@ -84,7 +82,7 @@ class AutobindManager {
         procNames = new ArrayList<>();
         Set<Class<? extends ComponentProcessor>> procClsList = reflections.getSubTypesOf(ComponentProcessor.class);
         LOGGER.debug("component processors: {}", procClsList.size());
-        for(Class<?> cls : procClsList) {
+        for (Class<?> cls : procClsList) {
             String procId = bindComponentProcessor(cls);
             procNames.add(procId);
         }
@@ -92,9 +90,9 @@ class AutobindManager {
         singletonKeys = new ArrayList<>();
         Set<Class<?>> clsList = reflections.getTypesAnnotatedWith(Component.class);
         LOGGER.debug("components: {}", clsList.size());
-        for(Class<?> cls : clsList) {
+        for (Class<?> cls : clsList) {
             SingletonKey sk = bindComponent(cls);
-            if(sk != null) {
+            if (sk != null) {
                 singletonKeys.add(sk);
             }
         }
@@ -120,31 +118,28 @@ class AutobindManager {
         return objId;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private SingletonKey bindComponent(Class cmpCls) {
         Component ann = (Component) cmpCls.getAnnotation(Component.class);
         LOGGER.debug("binding component: type={}, name={}, namedOnly={}, value={}",
                 cmpCls.getName(), ann.name(), ann.namedOnly(), ann.value());
 
         Named named = null;
-        if(ann.value() != null && ann.value().trim().length() > 0) {
+        if (ann.value() != null && ann.value().trim().length() > 0) {
             named = Names.named(ann.value());
-        }
-        else if(ann.name() != null && ann.name().trim().length() > 0) {
+        } else if (ann.name() != null && ann.name().trim().length() > 0) {
             named = Names.named(ann.name());
         }
 
         Set<Class<?>> ifaces = new HashSet<>();
         retrieveInterfaces(cmpCls, ifaces);
         Set<Class<?>> bindables = retrieveBindables(ifaces);
-        if(ann.namedOnly()) {
+        if (ann.namedOnly()) {
             return createBindings(cmpCls, null, named);
-        }
-        else {
-            if(bindables.isEmpty()) {
+        } else {
+            if (bindables.isEmpty()) {
                 return createBindings(cmpCls, ifaces, named);
-            }
-            else {
+            } else {
                 return createBindings(cmpCls, bindables, named);
             }
         }
@@ -152,63 +147,65 @@ class AutobindManager {
 
     private void retrieveInterfaces(Class<?> cls, Set<Class<?>> interfaces) {
         Class<?>[] ifaces = cls.getInterfaces();
-        if(ifaces.length == 0) {
+        Class<?> superCls = cls.getSuperclass();
+        if (superCls != null) {
+            retrieveInterfaces(superCls, interfaces);
+        }
+
+        if (ifaces.length == 0) {
             return;
         }
-        for(Class<?> iface : ifaces) {
-            if(iface.getAnnotation(NonBindable.class) == null) {
+        for (Class<?> iface : ifaces) {
+            if (iface.getAnnotation(NonBindable.class) == null) {
                 interfaces.add(iface);
             }
         }
-        for(Class<?> iface : ifaces) {
+        for (Class<?> iface : ifaces) {
             retrieveInterfaces(iface, interfaces);
         }
     }
 
     private Set<Class<?>> retrieveBindables(Set<Class<?>> interfaces) {
         Set<Class<?>> result = new HashSet<Class<?>>();
-        for(Class<?> iface : interfaces) {
-            if(iface.getAnnotation(Bindable.class) != null) {
+        for (Class<?> iface : interfaces) {
+            if (iface.getAnnotation(Bindable.class) != null) {
                 result.add(iface);
             }
         }
         return result;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private SingletonKey createBindings(Class cmpCls, Set<Class<?>> ifaces, Named named) {
         boolean hasSingletonAnn = (cmpCls.getAnnotation(Singleton.class) != null);
         SingletonKey sk = null;
-        if(ifaces != null && !ifaces.isEmpty()) {
-            for(Class<?> iface : ifaces) {
-                if(named != null) {
+        if (ifaces != null && !ifaces.isEmpty()) {
+            for (Class<?> iface : ifaces) {
+                if (named != null) {
                     binder.bind(iface).annotatedWith(named).to(cmpCls);
                     LOGGER.debug("bound iface: {}, named: {}, to: {}", iface.getName(), named.value(), cmpCls.getName());
-                    if(hasSingletonAnn) {
+                    if (hasSingletonAnn) {
                         sk = new SingletonKey(iface, named);
                     }
-                }
-                else {
+                } else {
                     binder.bind(iface).to(cmpCls);
                     LOGGER.debug("bound iface: {}, to: {}", iface.getName(), cmpCls.getName());
-                    if(hasSingletonAnn) {
+                    if (hasSingletonAnn) {
                         sk = new SingletonKey(iface, null);
                     }
                 }
             }
-        }
-        else if(named != null) {
+        } else if (named != null) {
             binder.bind(Object.class).annotatedWith(named).to(cmpCls);
             LOGGER.debug("bound named: {}, to: {}", named.value(), cmpCls.getName());
-            if(hasSingletonAnn) {
+            if (hasSingletonAnn) {
                 sk = new SingletonKey(null, named);
             }
-        }
-        else {
+        } else {
             Named dyname = Names.named(cmpCls.getClass().getName() + "#" + Long.toString(System.currentTimeMillis(), 36));
             binder.bind(Object.class).annotatedWith(dyname).to(cmpCls);
             LOGGER.debug("bound named: {}, to: {}", dyname.value(), cmpCls.getName());
-            if(hasSingletonAnn) {
+            if (hasSingletonAnn) {
                 sk = new SingletonKey(null, named);
             }
         }
