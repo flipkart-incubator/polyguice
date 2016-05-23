@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.flipkart.polyguice</groupId>
         <artifactId>polyguice-all</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>polyguice-config</artifactId>
