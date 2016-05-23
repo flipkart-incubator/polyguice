@@ -64,6 +64,7 @@ class LifecycleManager {
         procNames = new ArrayList<>();
         singletonKeys = new ArrayList<>();
         disposables = new ArrayList<>();
+        processors = new ArrayList<>();
     }
 
     public void setProcessors(List<String> names) {
@@ -89,7 +90,6 @@ class LifecycleManager {
     public boolean start() {
         LOGGER.debug("starting lifecycle operations");
         startupError = false;
-        processors = new ArrayList<>();
         for(String name : procNames) {
             ComponentProcessor proc = (ComponentProcessor)
                     compCtxt.getInstance(name);
