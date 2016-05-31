@@ -16,15 +16,6 @@
 
 package com.flipkart.polyguice.core.support;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.flipkart.polyguice.core.Bindable;
 import com.flipkart.polyguice.core.Component;
 import com.flipkart.polyguice.core.ComponentProcessor;
@@ -33,6 +24,14 @@ import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author indroneel.das
@@ -77,6 +76,7 @@ class AutobindManager {
             .setUrls(ClasspathHelper.forClassLoader())
             .addScanners(new SubTypesScanner(), new TypeAnnotationsScanner());
  */
+        ReflectionsHelper.registerUrlTypes();
         Reflections reflections = new Reflections((Object[]) scanPkgNames);
 
         procNames = new ArrayList<>();
