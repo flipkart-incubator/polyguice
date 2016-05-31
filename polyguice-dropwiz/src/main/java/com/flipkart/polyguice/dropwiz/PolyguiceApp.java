@@ -16,29 +16,27 @@
 
 package com.flipkart.polyguice.dropwiz;
 
+import com.flipkart.polyguice.core.support.Polyguice;
+import com.flipkart.polyguice.core.support.ReflectionsHelper;
 import io.dropwizard.Application;
 import io.dropwizard.Configuration;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletRegistration;
+import javax.servlet.annotation.WebInitParam;
+import javax.servlet.annotation.WebServlet;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletRegistration;
-import javax.servlet.annotation.WebInitParam;
-import javax.servlet.annotation.WebServlet;
-
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.flipkart.polyguice.core.support.Polyguice;
 
 /**
  * @author indroneel.das
@@ -134,11 +132,13 @@ public class PolyguiceApp<T extends Configuration> extends Application<T> {
     // Helper methods
 
     private Set<Class<?>> findResourceTypes() {
+        ReflectionsHelper.registerUrlTypes();
         Reflections reflections = new Reflections(scanPkgNames.toArray());
         return reflections.getTypesAnnotatedWith(Resource.class);
     }
 
     private List<Class<?>> findServletTypes() {
+        ReflectionsHelper.registerUrlTypes();
         Reflections reflections = new Reflections(scanPkgNames.toArray());
         Set<Class<?>> types = reflections.getTypesAnnotatedWith(WebServlet.class);
         List<Class<?>> result = new ArrayList<>();
