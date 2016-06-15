@@ -17,12 +17,15 @@
 package com.flipkart.polyguice.config;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.slf4j.Logger;
@@ -45,36 +48,25 @@ public class ApacheCommonsConfigProvider implements ConfigurationProvider {
         rootConfig = new CompositeConfiguration();
     }
 
-    public ApacheCommonsConfigProvider location(String loc) {
+    public ApacheCommonsConfigProvider location(String filePath) {
+        Class<? extends Configuration> clazz = selectConfigImpl(filePath);
         try {
-            if(loc.toLowerCase(Locale.getDefault()).endsWith(".properties")) {
-                PropertiesConfiguration config = new PropertiesConfiguration(new File(loc));
-                rootConfig.addConfiguration(config);
-                LOGGER.debug("properties configuration from {}", loc);
+            if (clazz != null) {
+                this.rootConfig.addConfiguration(clazz.getConstructor(File.class).newInstance(new File(filePath)));
             }
-            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".xml")) {
-                XMLConfiguration config = new XMLConfiguration(new File(loc));
-                rootConfig.addConfiguration(config);
-                LOGGER.debug("xml configuration from {}", loc);
-            }
-            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".json")) {
-                JsonConfiguration config = new JsonConfiguration(new File(loc));
-                rootConfig.addConfiguration(config);
-                LOGGER.debug("json configuration from {}", loc);
-            }
-            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".yml")) {
-                YamlConfiguration config = new YamlConfiguration(loc);
-                rootConfig.addConfiguration(config);
-                LOGGER.debug("yaml configuration from {}", loc);
-            }
-            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".yaml")) {
-                YamlConfiguration config = new YamlConfiguration(loc);
-                rootConfig.addConfiguration(config);
-                LOGGER.debug("yaml configuration from {}", loc);
-            }
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
-        catch(Exception exep) {
-            LOGGER.error("unable to load configuration from " + loc.toString(), exep);
+        return this;
+    }
+    public ApacheCommonsConfigProvider location(URL url) {
+        Class<? extends Configuration> clazz = selectConfigImpl(url.getPath());
+        try {
+            if (clazz != null) {
+                this.rootConfig.addConfiguration(clazz.getConstructor(URL.class).newInstance(url));
+            }
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
         return this;
     }
@@ -137,4 +129,35 @@ public class ApacheCommonsConfigProvider implements ConfigurationProvider {
         }
         return null;
     }
+    // PRIVATE METHODS
+
+    private Class<? extends Configuration> selectConfigImpl(String loc) {
+        try {
+            if(loc.toLowerCase(Locale.getDefault()).endsWith(".properties")) {
+                LOGGER.debug("properties configuration from {}", loc);
+                return PropertiesConfiguration.class;
+            }
+            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".xml")) {
+                LOGGER.debug("xml configuration from {}", loc);
+                return XMLConfiguration.class;
+            }
+            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".json")) {
+                LOGGER.debug("json configuration from {}", loc);
+                return JsonConfiguration.class;
+            }
+            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".yml")) {
+                LOGGER.debug("yaml configuration from {}", loc);
+                return YamlConfiguration.class;
+            }
+            else if(loc.toLowerCase(Locale.getDefault()).endsWith(".yaml")) {
+                LOGGER.debug("yaml configuration from {}", loc);
+                return YamlConfiguration.class;
+            }
+        }
+        catch(Exception exep) {
+            LOGGER.error("unable to load configuration from " + loc.toString(), exep);
+        }
+        return null;  // TODO - should ideally throw an exception, but going with the semantics of failing queitly for now
+    }
+
 }
