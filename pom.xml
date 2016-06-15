@@ -7,7 +7,7 @@
     <artifactId>polyguice-all</artifactId>
     <name>Polyguice</name>
     <packaging>pom</packaging>
-    <version>1.0.2-SNAPSHOT.patched</version>
+    <version>1.0.3</version>
 
     <scm>
         <url>https://github.com/flipkart-incubator/polyguice.git</url>
